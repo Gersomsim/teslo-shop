@@ -1,9 +1,18 @@
-import { BadRequestException, Inject, Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException
+} from "@nestjs/common";
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from "@nestjs/typeorm";
 import { Product } from "./entities/product.entity";
 import { Repository } from "typeorm";
+import { PaginationDto } from "../common/dto/pagination.dto";
+import { validate as UUID} from 'uuid'
 
 @Injectable()
 export class ProductsService {
@@ -22,20 +31,36 @@ export class ProductsService {
     }
   }
 
-  findAll() {
-    return `This action returns all products`;
+  findAll({ limit = 2, offset = 0 }: PaginationDto) {
+    return this.productRepository.find({
+      take: limit,
+      skip: offset,
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
+  async findOne(term: string) {
+    let product;
+    if (UUID(term)) {
+      product = await this.productRepository.findOne({ where: { id: term }});
+    } else {
+      product = await this.productRepository.findOne({ where: { slug: term }});
+    }
+    if (!product)
+      throw new NotFoundException(`product with id: ${term} not found`);
+    return product;
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async update(id: string, updateProductDto: UpdateProductDto) {
+    const product = await this.findOne(id);
+    this.productRepository.merge(product, updateProductDto);
+    return this.productRepository.save(product);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  async remove(id: string) {
+    const result = await this.productRepository.delete(id);
+    if (result.affected === 0){
+      throw new NotFoundException(`product with id: ${id} not found`);
+    }
   }
   private handleDbExceptions(err: any) {
     if (err.code === '23505') {
