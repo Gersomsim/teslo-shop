@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigType } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { ProductsModule } from './products/products.module';
 import * as joi from 'joi';
 import Configuration from "./config/app.config"
 
@@ -28,6 +29,7 @@ import Configuration from "./config/app.config"
         };
       },
     }),
+    ProductsModule,
   ],
   controllers: [],
   providers: [],
