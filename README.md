@@ -4,7 +4,8 @@
 
 # Teslo API
 
-1. Levantar la base de datos
-```
-docker compose up -d
-```
+1. Clonar el proyecti
+2. Instalar dependencias
+3. Clonar el archivo .env.example y renombrar a .env
+4. Levantar el proyecto 
+5. Levantar la base de datos ``` docker compose up -d ```
