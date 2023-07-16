@@ -10,5 +10,9 @@ export default registerAs('Configuration', () => {
       username: process.env.DB_USERNAME,
       synchronize: process.env.DB_SYNCHRONIZE === 'TRUE',
     },
+    app: {
+      host: process.env.HOST_API,
+      port: process.env.HOST_PORT,
+    }
   };
 });
