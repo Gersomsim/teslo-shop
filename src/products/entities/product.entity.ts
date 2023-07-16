@@ -1,4 +1,5 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { ProductImage } from "./product-image.entity";
 
 @Entity()
 export class Product {
@@ -41,4 +42,11 @@ export class Product {
   updateSlug() {
     this.slug = this.slug.toLowerCase().replaceAll(' ', '_');
   }
+
+  @OneToMany(
+    () => ProductImage,
+    (images) => images.product,
+    { cascade: true },
+  )
+  images: ProductImage[];
 }
