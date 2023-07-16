@@ -10,7 +10,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from "@nestjs/typeorm";
 import { Product } from "./entities/product.entity";
-import { Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import { PaginationDto } from "../common/dto/pagination.dto";
 import { validate as UUID} from 'uuid'
 import { ProductImage } from "./entities/product-image.entity";
@@ -22,7 +22,8 @@ export class ProductsService {
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
     @InjectRepository(ProductImage)
-    private readonly productImageRepository: Repository<ProductImage>
+    private readonly productImageRepository: Repository<ProductImage>,
+    private readonly dataSource: DataSource
   ) {}
   async create(createProductDto: CreateProductDto) {
     try {
@@ -79,9 +80,30 @@ export class ProductsService {
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
-    const product = await this.findOne(id);
-    // this.productRepository.merge(product, updateProductDto);
-    return this.productRepository.save(product);
+    const { images, ...toUpdate} = updateProductDto;
+    const product = await this.productRepository.preload({ id, ...toUpdate });
+    if (!product)
+      throw new NotFoundException(`product with id: ${id} not found`);
+    //create query runner
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      if (images) {
+        await queryRunner.manager.delete(ProductImage, { product: { id } });
+        product.images = images.map((image) =>
+          this.productImageRepository.create({ url: image }),
+        );
+      }
+      await queryRunner.manager.save(product);
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+      return product;
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+      await queryRunner.release();
+      this.handleDbExceptions(e);
+    }
   }
 
   async remove(id: string) {
