@@ -119,4 +119,12 @@ export class ProductsService {
     this.loger.error(err);
     throw new InternalServerErrorException('Expected Error, check logs');
   }
+  async deleteAllProducts() {
+    const query = this.productRepository.createQueryBuilder('product');
+    try {
+      return query.delete().where({}).execute();
+    } catch (e) {
+      this.handleDbExceptions(e);
+    }
+  }
 }
