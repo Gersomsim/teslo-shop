@@ -13,19 +13,28 @@ import { Product } from "./entities/product.entity";
 import { Repository } from "typeorm";
 import { PaginationDto } from "../common/dto/pagination.dto";
 import { validate as UUID} from 'uuid'
+import { ProductImage } from "./entities/product-image.entity";
 
 @Injectable()
 export class ProductsService {
   private readonly loger = new Logger('ProductsService');
   constructor(
     @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>
+    private readonly productRepository: Repository<Product>,
+    @InjectRepository(ProductImage)
+    private readonly productImageRepository: Repository<ProductImage>
   ) {}
   async create(createProductDto: CreateProductDto) {
     try {
-      const newProduct = this.productRepository.create(createProductDto);
+      const { images = [], ...productDetails } = createProductDto;
+      const newProduct = this.productRepository.create({
+        ...productDetails,
+        images: images.map((image) =>
+          this.productImageRepository.create({ url: image }),
+        ),
+      });
       await this.productRepository.save(newProduct);
-      return newProduct;
+      return { ...newProduct, images };
     } catch (e) {
       this.handleDbExceptions(e);
     }
@@ -55,7 +64,7 @@ export class ProductsService {
 
   async update(id: string, updateProductDto: UpdateProductDto) {
     const product = await this.findOne(id);
-    this.productRepository.merge(product, updateProductDto);
+    // this.productRepository.merge(product, updateProductDto);
     return this.productRepository.save(product);
   }
 
