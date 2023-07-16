@@ -8,13 +8,14 @@ import {
   Delete,
   UploadedFile,
   UseInterceptors,
-  BadRequestException
+  BadRequestException, Res
 } from "@nestjs/common";
 import { FilesService } from './files.service';
 import { FileInterceptor } from "@nestjs/platform-express";
 import { FileFilter } from "./helpers/fileFilter.helper";
 import { diskStorage } from "multer";
 import { FileNamer } from "./helpers/fileNamer.helper";
+import { Response } from "express";
 
 @Controller('files')
 export class FilesController {
@@ -40,11 +41,18 @@ export class FilesController {
     if (!file) {
       throw new BadRequestException('Make sure that the file is an image');
     }
-    console.log(file);
+    const secureUrl = `${file.filename}`
     return {
-      fileName: file.originalname,
+      fileName: secureUrl
     };
     // return this.filesService.create();
   }
-
+  @Get('product/:image')
+  findImage(
+    @Res() res: Response,
+    @Param('image') image: string
+  ) {
+    const path = this.filesService.create(image);
+    res.sendFile(path);
+  }
 }
