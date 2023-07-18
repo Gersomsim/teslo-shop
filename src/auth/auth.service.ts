@@ -1,27 +1,30 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException, UnauthorizedException
-} from "@nestjs/common";
-import { CreateUserDto } from './dto/create-user.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { InjectRepository } from "@nestjs/typeorm";
+import { User } from "./entities/user.entity";
+import { Repository } from "typeorm";
+import * as bcrypt from "bcrypt";
 import { LoginUserDto } from "./dto/login-user.dto";
+import { JwtPayload } from "./interfaces/jwt-payload.interface";
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private jwtService: JwtService,
   ) {}
 
   async create(createAuthDto: CreateUserDto) {
     try {
       const newUser = this.userRepository.create(createAuthDto);
       newUser.password = bcrypt.hashSync(createAuthDto.password, 10);
-      return await this.userRepository.save(newUser);
+      await this.userRepository.save(newUser);
+      return {
+        ...newUser,
+        token: this.getJwtToken({ email: newUser.email }),
+      }
     } catch (e) {
       this.handleDBErrors(e);
     }
@@ -38,8 +41,13 @@ export class AuthService {
     if (!bcrypt.compareSync(password, user.password)) {
       throw new UnauthorizedException('Credential are no valid (password)');
     }
-    //TODO retornar el JWT
-    return user;
+    return {
+      ...user,
+      token: this.getJwtToken({ email: user.email }),
+    };
+  }
+  private getJwtToken(payload: JwtPayload) {
+    return this.jwtService.sign(payload);
   }
   private handleDBErrors(err: any): never {
     console.log(err.detail, err.code);

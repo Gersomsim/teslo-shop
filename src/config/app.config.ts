@@ -13,6 +13,10 @@ export default registerAs('Configuration', () => {
     app: {
       host: process.env.HOST_API,
       port: process.env.HOST_PORT,
-    }
+    },
+    jwt: {
+      secret: process.env.JWT_SECRET,
+      expires: process.env.JWT_EXPIRES,
+    },
   };
 });
