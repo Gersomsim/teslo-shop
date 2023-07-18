@@ -14,7 +14,7 @@ export class User {
   @Column({ type: 'text' })
   fullName: string;
 
-  @Column({ type: 'bool' })
+  @Column({ type: 'bool', default: true })
   isActive: boolean;
 
   @Column({ type: 'text', array: true, default: ['user'] })
