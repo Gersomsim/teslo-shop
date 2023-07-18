@@ -34,7 +34,7 @@ export class FilesController {
         // fileSize: 1000
       },
       storage: diskStorage({
-        destination: './static/products',
+        destination: './static/uploads',
         filename: FileNamer,
       }),
     }),
