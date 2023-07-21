@@ -24,12 +24,17 @@ export class AuthController {
     return this.authService.login(loginUserDto);
   }
 
+  @Auth()
+  @Get('check-status')
+  checkAuthStatus(@GetUser() user: User) {
+    return this.authService.checkAuthStatus(user);
+  }
+
   @Get('test')
   @UseGuards(AuthGuard())
   testing(@GetUser() user: User, @RawHeaders() raw: any) {
     return { user, raw };
   }
-
 
   // @SetMetadata('roles', ['user', 'admin'])
   @Get('test2')
